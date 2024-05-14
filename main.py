@@ -6,11 +6,18 @@ import logging
 import os
 import asyncio
 
-# uvicorn main:app --reload # Dar start/reload server
+# uvicorn main:app --reload
 
 logging.basicConfig(level=logging.DEBUG)
 app = FastAPI()
 BASE_URL = os.getenv("BASE_URL", "http://vitibrasil.cnpuv.embrapa.br/index.php?opcao=opt_0")
+
+timeout_config = httpx.Timeout(
+    connect=10.0,
+    read=60.0,
+    write=30.0,
+    pool=60.0
+)
 
 
 async def fetch_content(session: httpx.AsyncClient, url: str, params: dict = None):
@@ -28,7 +35,7 @@ async def scrape_data_production(url_selected: str, year_selected: str, option_s
     url_selected = f"{url_selected}{option_selected}"
     all_data = []
 
-    async with httpx.AsyncClient() as session:
+    async with httpx.AsyncClient(timeout=timeout_config) as session:
         content = await fetch_content(session, url_selected)
         if not content:
             return []
@@ -55,13 +62,24 @@ async def scrape_data_production(url_selected: str, year_selected: str, option_s
             if not table:
                 continue
 
-            quantity_type = table.find('thead').find_all('th')[1].text.split()[-1]
-            data = [{
-                'Ano': year,
-                'Produto': row.find_all('td')[0].text.strip(),
-                'Quantidade': row.find_all('td')[1].text.strip(),
-                'Quantidade tipo': quantity_type
-            } for row in table.find_all('tr')[1:] if len(row.find_all('td')) >= 2]
+            tipo = 'Desconhecido'
+            data = []
+            for row in table.find_all('tr')[1:]:
+                cells = row.find_all('td')
+                if len(cells) >= 2:
+                    product = cells[0].text.strip()
+                    quantity = cells[1].text.strip()
+
+                    if cells[0].has_attr('class') and 'tb_item' in cells[0]['class']:
+                        tipo = product
+                    elif cells[0].has_attr('class') and 'tb_subitem' in cells[0]['class']:
+                        data.append({
+                            'Ano': year,
+                            'Tipo': tipo,
+                            'Produto': product,
+                            'Quantidade': quantity,
+                            'Quantidade tipo': cells[1].text.split()[-1]
+                        })
 
             if data:
                 all_data.extend(data)
@@ -74,7 +92,7 @@ async def scrape_data_processing(url_selected: str, year_selected: str, option_s
     url_selected = f"{url_selected}{option_selected}"
     all_data = []
 
-    async with httpx.AsyncClient() as session:
+    async with httpx.AsyncClient(timeout=timeout_config) as session:
         content = await fetch_content(session, url_selected)
         if not content:
             return []
@@ -112,14 +130,25 @@ async def scrape_data_processing(url_selected: str, year_selected: str, option_s
             if not table:
                 continue
 
-            quantity_type = table.find('thead').find_all('th')[1].text.split()[-1]
-            data = [{
-                'Ano': year,
-                'Categoria': suboption_text,
-                'Produto': row.find_all('td')[0].text.strip(),
-                'Quantidade': row.find_all('td')[1].text.strip(),
-                'Quantidade tipo': quantity_type
-            } for row in table.find_all('tr')[1:] if len(row.find_all('td')) >= 2]
+            tipo = 'Desconhecido'
+            data = []
+            for row in table.find_all('tr')[1:]:
+                cells = row.find_all('td')
+                if len(cells) >= 2:
+                    product = cells[0].text.strip()
+                    quantity = cells[1].text.strip()
+
+                    if cells[0].has_attr('class') and 'tb_item' in cells[0]['class']:
+                        tipo = product
+                    elif cells[0].has_attr('class') and 'tb_subitem' in cells[0]['class']:
+                        data.append({
+                            'Ano': year,
+                            'Categoria': suboption_text,
+                            'Tipo': tipo,
+                            'Produto': product,
+                            'Quantidade': quantity,
+                            'Quantidade tipo': cells[1].text.split()[-1]
+                        })
 
             if data:
                 all_data.extend(data)
@@ -138,7 +167,8 @@ async def scrape_data_processing(url_selected: str, year_selected: str, option_s
                      "application/json": {
                          "example": [{
                              "Ano": 2024,
-                             "Produto": "VINHO DE MESA",
+                             "Tipo": "VINHO DE MESA",
+                             "Produto": "Tinto",
                              "Quantidade": "139.320.884",
                              "Quantidade tipo": "Litros"
                          }]
@@ -174,4 +204,3 @@ async def get_scrape_data_production(year: str = Query("Tudo", description="Ano 
 async def get_scrape_data_processing(year: str = Query("Tudo", description="Ano para filtrar os dados ou 'Tudo' para obter todos os dados disponíveis"),
                                      category: int = Query(0, ge=0, le=4, description="Categoria para filtrar os dados, 0 para todas as categorias disponíveis, 1 a 4 para categorias específicas")):
     return await scrape_data_processing(BASE_URL, year, 3, category)
-
