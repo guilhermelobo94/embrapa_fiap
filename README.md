@@ -18,3 +18,7 @@ Guilherme Lobo (https://www.linkedin.com/in/guilhermegclobo/)
 
 Matheus Moura (https://www.linkedin.com/in/matheus-moura-pinho-55a25b186/)
 
+# Acesso a documentação da API;
+
+http://52.22.130.203/docs
+
