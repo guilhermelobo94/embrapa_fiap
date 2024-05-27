@@ -11,7 +11,7 @@ import csv
 
 logging.basicConfig(level=logging.DEBUG)
 app = FastAPI()
-BASE_URL = os.getenv("BASE_URL", "http://vitibrasil.cnpuv.embrapass.br/index.php?opcao=opt_0")
+BASE_URL = os.getenv("BASE_URL", "http://vitibrasil.cnpuv.embrapa.br/index.php?opcao=opt_0")
 
 timeout_config = httpx.Timeout(
     connect=20.0,
