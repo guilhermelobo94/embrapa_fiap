@@ -99,6 +99,10 @@ async def scrape_data_production(url_selected: str, year_selected: str) -> List[
         return final_data
     except Exception as e:
         logging.error(f"Erro ao raspar dados: {str(e)}")
+        if year_selected == '':
+            year_selected = list(range(1970, 2024))
+        else:
+            year_selected = [year_selected]
         return csv_production(year_selected)
 
 
@@ -184,9 +188,13 @@ async def scrape_data_processing(url_selected: str, year_selected: str, category
     except Exception as e:
         logging.error(f"Erro no processamento: {e}")
         if not category:
-            category_v = [1, 2, 3]
+            category_v = [1, 2, 3, 4]
         else:
             category_v = [category]
+        if year_selected == '':
+            year_selected = list(range(1970, 2023))
+        else:
+            year_selected = [year_selected]
         return csv_processing(year_selected, category_v)
 
 
@@ -261,6 +269,10 @@ async def scrape_data_commercialization(url_selected: str, year_selected: str) -
         return all_data
     except Exception as e:
         logging.error(f"Erro na comercialização: {e}")
+        if year_selected == '':
+            year_selected = list(range(1970, 2023))
+        else:
+            year_selected = [year_selected]
         return csv_commercialization(year_selected)
 
 
@@ -350,6 +362,10 @@ async def scrape_data_importation(url_selected: str, year_selected: str, categor
             category_v = [1, 2, 3, 4, 5]
         else:
             category_v = [category]
+        if year_selected == '':
+            year_selected = list(range(1970, 2024))
+        else:
+            year_selected = [year_selected]
         return csv_importing(year_selected, category_v)
 
 
@@ -439,6 +455,10 @@ async def scrape_data_exportation(url_selected: str, year_selected: str, categor
             category_v = [1, 2, 3, 4]
         else:
             category_v = [category]
+        if year_selected == '':
+            year_selected = list(range(1970, 2024))
+        else:
+            year_selected = [year_selected]
         return csv_exportation(year_selected, category_v)
 
 
@@ -644,41 +664,62 @@ async def get_scrape_data_exportation(year: str = Query('',
 
 
 def csv_production(ano):
-    item = []
-    with open('CSV\\Producao.csv', 'r') as ficheiro:
-        reader = csv.reader(ficheiro)
+    data = []
+    for elemento in ano:
+        with open('CSV\\Producao.csv', 'r', encoding='utf-8') as ficheiro:
+            reader = csv.reader(ficheiro)
 
-        # Lendo a primeira linha para obter os títulos das colunas
-        colunas = next(reader)[0].split(';')
-        #print(colunas)
+            # Lendo a primeira linha para obter os títulos das colunas
+            colunas = next(reader)[0].split(';')
+            #print(colunas)
 
-        # Encontrando a posição do ano nos títulos das colunas
-        indice_ano = colunas.index(str(ano))
-        #print(indice_ano)
-        tipo_string = ""
-        # Iterar sobre as linhas restantes
-        for linha in reader:
-            # Verificando se a linha não está vazia
-            if linha:
-                linha_v = linha[0].split(';')
-                #print(linha_v[1][2])
-                if linha_v[1][2] == "_":
-                    # Adicionando os valores necessários ao item
-                    # item.append({linha_v[0], tipo_string, linha_v[2], linha_v[indice_ano]})
-                    item.append({'Ano': ano,
-                                 'Tipo': tipo_string,
-                                 'Produto': linha_v[2],
-                                 'Quantidade': linha_v[3],
-                                 'Quantidade tipo': 'L'
-                                 })
-                else:
-                    tipo_string = linha_v[1]
-        #print(item)
-    return item
+            # Encontrando a posição do ano nos títulos das colunas
+            indice_ano = colunas.index(str(elemento))
+            #print(indice_ano)
+            tipo_string = ""
+            # Iterar sobre as linhas restantes
+            for linha in reader:
+                # Verificando se a linha não está vazia
+                if linha:
+                    linha_v = linha[0].split(';')
+                    #print(linha_v[1][2])
+                    if linha_v[1][2] == "_":
+                        # Adicionando os valores necessários ao item
+                        # item.append({linha_v[0], tipo_string, linha_v[2], linha_v[indice_ano]})
+                        #print(linha_v)
+                        data[len(data)-1]['items'].append({'item_titulo': linha_v[2],
+                                                           'quantidade': linha_v[indice_ano],
+                                                           'quantidade_tipo': '2L'
+                                                           })
+                    else:
+                        data.append({
+                            'tipo_titulo': linha_v[1],
+                            'ano': elemento,
+                            'quantidade_total': linha_v[indice_ano],
+                            'items': []
+                        })
+
+        #print(data)
+    return [{'categoria_titulo':'Sem Categoria','tipo':data}]
+
+
+def contains_type(data, tipo):
+    for item in data:
+        if item.get("tipo_titulo") == tipo:
+            return True
+    return False
+
+
+def find_position_of_type(data, tipo):
+    for index, item in enumerate(data):
+        if item.get("tipo_titulo") == tipo:
+            return index
+    return -1
 
 
 def csv_processing(ano, cat):
-    item = []
+    category_data = []
+    data = []
     category = []
     if 1 in cat:
         category.append("Viniferas")
@@ -686,145 +727,232 @@ def csv_processing(ano, cat):
         category.append("Americanas")
     if 3 in cat:
         category.append("Mesa")
-    #if 4 in cat:
-    #    category.append["Semclass"]
-
+    if 4 in cat:
+        category.append("Semclass")
+    print(ano)
     for elemento in category:
-        with open('CSV\\Processa' + elemento + '.csv', 'r', encoding='utf-8') as ficheiro:
-            reader = csv.reader(ficheiro, delimiter='\t')
+        for year in ano:
+            print(year)
+            with open('CSV\\Processa' + elemento + '.csv', 'r', encoding='utf-8') as ficheiro:
+                reader = csv.reader(ficheiro, delimiter='\t')
 
-            # Lendo a primeira linha para obter os títulos das colunas
-            colunas = next(reader)
-            # Encontrando a posição do ano nos títulos das colunas
-            indice_ano = colunas.index(str(ano))
+                tipo_string = ""
+                # Lendo a primeira linha para obter os títulos das colunas
+                colunas = next(reader)
+                # Encontrando a posição do ano nos títulos das colunas
+                indice_ano = colunas.index(str(year))
 
-            tipo_string = ""
-            # Iterar sobre as linhas restantes
-            for linha in reader:
-                # Verificando se a linha não está vazia
-                if linha:
-                    if linha[1][2] == "_":
-                        # Adicionando os valores necessários ao item
-                        item.append({
-                            'Ano': ano,
-                            'Categoria': elemento,
-                            'Tipo': tipo_string,
-                            'Produto': linha[2],
-                            'Quantidade': linha[indice_ano],
-                            'Quantidade tipo': 'Kg'
-                        })
-                    else:
-                        tipo_string = linha[1]
-    return item
+                # Iterar sobre as linhas restantes
+                for linha in reader:
+                    # Verificando se a linha não está vazia
+                    if linha:
+                        if linha[1][2] == "_":
+                            # Adicionando os valores necessários ao item
+                            data[find_position_of_type(data, tipo_string)]['items'].append({
+                                                            'item_titulo': linha[2],
+                                                            'quantidade': linha[indice_ano],
+                                                            'quantidade_tipo': 'Kg'
+                                                        })
+                        else:
+                            data.append({
+                                'tipo_titulo': linha[1],
+                                'ano': year,
+                                'quantidade_total': linha[indice_ano],
+                                'items': []
+                            })
+                            tipo_string = linha[1]
+            category_data.append({'categoria_titulo': elemento,
+                                  'tipo': data})
+    return category_data
 
 
 def csv_commercialization(ano):
-    item = []
-    with open('CSV\\Comercio.csv', 'r', encoding='utf-8') as ficheiro:
-        reader = csv.reader(ficheiro, delimiter=';')
-
-        # Lendo a primeira linha para obter os títulos das colunas
-        colunas = next(reader)
-        indice_ano = colunas.index(str(ano))
-
-        tipo_string = ""
-        # Iterar sobre as linhas restantes
-        for linha in reader:
-            # Verificando se a linha não está vazia
-            if linha:
-                # Verificando se o terceiro caractere do segundo campo é "_"
-                if linha[1][2] == "_":
-                    #print(linha)
-                    # Adicionando os valores necessários ao item
-                    item.append({
-                        'Produto': linha[2],
-                        'Ano': ano,
-                        'Tipo': tipo_string,
-                        'Quantidade': linha[indice_ano],
-                        'Quantidade tipo': 'L'
-                    })
-                else:
-                    tipo_string = linha[1]
-
-    #print(item)
-    return item
-
-
-def csv_importing(ano, cat):
-    item = []
-    category = []
-    if 1 in cat:
-        category.append("Vinhos")
-    if 2 in cat:
-        category.append("Espumantes")
-    if 3 in cat:
-        category.append("Frescas")
-    if 4 in cat:
-        category.append("Passas")
-    if 5 in cat:
-        category.append("Suco")
-
-    for elemento in category:
-        with open('CSV\\Imp' + elemento + '.csv', 'r', encoding='utf-8') as ficheiro:
+    print(ano)
+    data = []
+    for year in ano:
+        with open('CSV\\Comercio.csv', 'r', encoding='utf-8') as ficheiro:
             reader = csv.reader(ficheiro, delimiter=';')
 
             # Lendo a primeira linha para obter os títulos das colunas
             colunas = next(reader)
-            # Encontrando a posição do ano nos títulos das colunas
-            indice_ano = colunas.index(str(ano))
+            indice_ano = colunas.index(str(year))
 
-            tipo_string = ""
             # Iterar sobre as linhas restantes
             for linha in reader:
                 # Verificando se a linha não está vazia
                 if linha:
-                    # Adicionando os valores necessários ao item
-                    item.append({
-                        'Ano': ano,
-                        'Categoria': elemento,
-                        'País': linha[1],
-                        'Quantidade': linha[indice_ano],
-                        'Quantidade tipo': 'Kg',
-                        'Valor': linha[indice_ano+1],
-                        'Valor tipo': 'US$'
-                    })
-    return item
+                    # Verificando se o terceiro caractere do segundo campo é "_"
+                    if linha[1][2] == "_":
+                        #print(linha)
+                        # Adicionando os valores necessários ao item
+                        data[len(data) - 1]['items'].append({'item_titulo': linha[2],
+                                                             'quantidade': linha[indice_ano],
+                                                             'quantidade_tipo': 'L'
+                                                             })
+                    else:
+                        data.append({
+                            'tipo_titulo': linha[1],
+                            'ano': year,
+                            'quantidade_total': linha[indice_ano],
+                            'items': []
+                        })
+    return [{'categoria_titulo':'Sem Categoria','tipo':data}]
 
 
-def csv_exportation(ano, cat):
-    item = []
-    category = []
-    if 1 in cat:
-        category.append("Vinho")
-    if 2 in cat:
-        category.append("Espumantes")
-    if 3 in cat:
-        category.append("Uva")
-    if 4 in cat:
-        category.append("Suco")
+def csv_importing(anos, cat):
+    # Definição de categorias correspondentes
+    categorias_dict = {
+        1: "Vinhos",
+        2: "Espumantes",
+        3: "Frescas",
+        4: "Passas",
+        5: "Suco"
+    }
+    categorias_dict2 = {
+        1: "Vinhos de Mesa",
+        2: "Espumantes",
+        3: "Uvas Frescas",
+        4: "Uvas Passas",
+        5: "Suco de Uva"
+    }
 
-    for elemento in category:
-        with open('CSV\\Exp' + elemento + '.csv', 'r', encoding='utf-8') as ficheiro:
-            reader = csv.reader(ficheiro, delimiter=';')
+    # Inicialização da estrutura de retorno
+    resultado = []
 
-            # Lendo a primeira linha para obter os títulos das colunas
-            colunas = next(reader)
-            # Encontrando a posição do ano nos títulos das colunas
-            indice_ano = colunas.index(str(ano))
+    # Iterar sobre as categorias selecionadas
+    for cat_id in cat:
+        if cat_id in categorias_dict:
+            categoria = categorias_dict[cat_id]
+            categoria_titulo = categorias_dict2[cat_id]
 
-            tipo_string = ""
-            # Iterar sobre as linhas restantes
-            for linha in reader:
-                # Verificando se a linha não está vazia
-                if linha:
-                    # Adicionando os valores necessários ao item
-                    item.append({
-                        'Ano': ano,
-                        'Categoria': elemento,
-                        'País': linha[1],
-                        'Quantidade': linha[indice_ano],
-                        'Quantidade tipo': 'Kg',
-                        'Valor': linha[indice_ano+1],
-                        'Valor tipo': 'US$'
-                    })
-    return item
+            tipo_lista = []
+
+            # Abrir e ler o arquivo CSV correspondente
+            with open(f'CSV\\Imp{categoria}.csv', 'r', encoding='utf-8') as ficheiro:
+                reader = csv.reader(ficheiro, delimiter=';')
+
+                # Lendo a primeira linha para obter os títulos das colunas
+                colunas = next(reader)
+
+                for ano in anos:
+                    if str(ano) in colunas:
+                        indice_ano = colunas.index(str(ano))
+                        quantidade_total = 0
+
+                        tipo = {
+                            "tipo_titulo": "Sem Tipo",
+                            "ano": ano,
+                            "quantidade_total": "0",  # Será atualizado com a soma das quantidades
+                            "item": []
+                        }
+
+                        # Iterar sobre as linhas restantes
+                        for linha in reader:
+                            # Verificando se a linha não está vazia
+                            if linha:
+                                quantidade = int(linha[indice_ano].replace(".", ""))
+                                valor = linha[indice_ano + 1]
+
+                                tipo["item"].append({
+                                    "item_titulo": linha[1],  # Nome do país
+                                    "quantidade": quantidade,
+                                    "quantidade_tipo": "Kg",
+                                    "valor": valor,
+                                    "valor_tipo": "US$"
+                                })
+
+                                quantidade_total += quantidade
+
+                        tipo["quantidade_total"] = str(quantidade_total)
+                        tipo_lista.append(tipo)
+
+                        # Resetar o ponteiro do arquivo para a segunda linha
+                        ficheiro.seek(0)
+                        next(reader)  # Ignorar a linha de cabeçalho novamente
+
+            resultado.append({
+                "categoria_titulo": categoria_titulo,
+                "tipo": tipo_lista
+            })
+    #print(resultado)
+    return resultado
+
+
+def csv_exportation(anos, cat):
+    # Definição de categorias correspondentes
+    categorias_dict = {
+        1: "Vinhos",
+        2: "Espumantes",
+        3: "Frescas",
+        4: "Suco"
+    }
+    categorias_dict2 = {
+        1: "Vinhos de Mesa",
+        2: "Espumantes",
+        3: "Uvas Frescas",
+        4: "Suco de Uva"
+    }
+
+    # Inicialização da estrutura de retorno
+    resultado = []
+
+    # Iterar sobre as categorias selecionadas
+    for cat_id in cat:
+        if cat_id in categorias_dict:
+            categoria = categorias_dict[cat_id]
+            categoria_titulo = categorias_dict2[cat_id]
+
+            tipo_lista = []
+
+            # Abrir e ler o arquivo CSV correspondente
+            with open(f'CSV\\Imp{categoria}.csv', 'r', encoding='utf-8') as ficheiro:
+                reader = csv.reader(ficheiro, delimiter=';')
+
+                # Lendo a primeira linha para obter os títulos das colunas
+                colunas = next(reader)
+
+                for ano in anos:
+                    if str(ano) in colunas:
+                        indice_ano = colunas.index(str(ano))
+                        quantidade_total = 0
+
+                        tipo = {
+                            "tipo_titulo": "Sem Tipo",
+                            "ano": ano,
+                            "quantidade_total": "0",  # Será atualizado com a soma das quantidades
+                            "item": []
+                        }
+
+                        # Iterar sobre as linhas restantes
+                        for linha in reader:
+                            # Verificando se a linha não está vazia
+                            if linha:
+                                quantidade = int(linha[indice_ano].replace(".", ""))
+                                valor = linha[indice_ano + 1]
+
+                                tipo["item"].append({
+                                    "item_titulo": linha[1],  # Nome do país
+                                    "quantidade": quantidade,
+                                    "quantidade_tipo": "Kg",
+                                    "valor": valor,
+                                    "valor_tipo": "US$"
+                                })
+
+                                quantidade_total += quantidade
+
+                        tipo["quantidade_total"] = str(quantidade_total)
+                        tipo_lista.append(tipo)
+
+                        # Resetar o ponteiro do arquivo para a segunda linha
+                        ficheiro.seek(0)
+                        next(reader)  # Ignorar a linha de cabeçalho novamente
+
+            resultado.append({
+                "categoria_titulo": categoria_titulo,
+                "tipo": tipo_lista
+            })
+    #print(resultado)
+    return resultado
+
+
+
