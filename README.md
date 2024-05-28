@@ -1,143 +1,158 @@
-# Embrapa - Tech Challenge Fiap
+# Embrapa - Tech Challenge Fiap - Desenvolvedores
 
-## 1. Objetivos;
+- Gabriel Sargeiro ([LinkedIn](https://www.linkedin.com/in/gabriel-sargeiro/))
+- Guilherme Lobo ([LinkedIn](https://www.linkedin.com/in/guilhermegclobo/))
+- Matheus Moura ([LinkedIn](https://www.linkedin.com/in/matheus-moura-pinho-55a25b186/))
 
-1. Criar uma rest API em Python que faça a consulta no site da Embrapa (http://vitibrasil.cnpuv.embrapa.br/) - FastAPI e documentar a API (Swagger);
+# Projeto Embrapa Vitivinicultura
 
-2. Criar método de autenticação (recomendável); **Não realizado**
+Este projeto consiste em uma API pública para consulta de dados de vitivinicultura da Embrapa. A API coleta dados de produção, processamento, comercialização, importação e exportação de produtos vinícolas.
 
-3. Desenhar arquitetura de ingestão e alimentação do modelo (primeira etapa não é necessário a elaboração do modelo);
+- Dados disponiveis em:
+   - http://vitibrasil.cnpuv.embrapa.br
 
+## Estrutura do Projeto
 
-## 1.1 Acesso a documentação da API e a API que realiza a consulta na embrapa:
+embrapa_fiap/
 
-http://52.22.130.203/docs
+    ├── CSV/
+    │ ├── comercio.csv
+    │ ├── ExpEspumantes.csv
+    │ ├── ExpSuco.csv
+    │ ├── ExpUva.csv
+    │ ├── ExpVinho.csv
+    │ ├── ImpEspumantes.csv
+    │ ├── ImpFrescas.csv
+    │ ├── ImpPassas.csv
+    │ ├── ImpSuco.csv
+    │ ├── ImpVinhos.csv
+    │ ├── ProcessaAmericanas.csv
+    │ ├── ProcessaMesa.csv
+    │ ├── ProcessaSemclass.csv
+    │ ├── ProcessaViniferas.csv
+    │ └── Producao.csv
+    ├── .gitignore
+    ├── main.py
+    ├── project_links.md
+    ├── README.md
+    └── requirements.txt
 
-## 1.3 Arquitetura de ingestão de dados e alimentação do modelo
+## Dependências
+- annotated-types==0.6.0
+- anyio==3.7.1
+- beautifulsoup4==4.12.3
+- certifi==2024.2.2
+- charset-normalizer==3.3.2
+- click==8.1.7
+- fastapi==0.103.2
+- h11==0.14.0
+- httpcore==1.0.5
+- httpx==0.26.0
+- idna==3.7
+- pydantic==2.7.1
+- pydantic_core==2.18.2
+- requests==2.31.0
+- sniffio==1.3.1
+- soupsieve==2.5
+- starlette==0.27.0
+- typing_extensions==4.11.0
+- urllib3==2.2.1
+- uvicorn==0.29.0
 
-Cenário
-Vamos desenvolver uma API para a Embrapa que fornece dados detalhados sobre produção, processamento, comercialização, importação e exportação de vitivinicultura. A API utilizará raspagem de dados do site Vitibrasil usando BeautifulSoup. A arquitetura de ingestão de dados será composta por Apache Kafka, Apache Spark, Amazon S3, Amazon Redshift, FastAPI, Nginx e Amazon Lightsail, com monitoramento e logging realizados pelo Prometheus.
+## Configuração do Ambiente
+1. Clone o repositório:
+   ```sh
+   git clone https://github.com/guilhermelobo94/embrapa_fiap.git
+   cd embrapa_fiap
+   python -m venv venv
 
-Arquitetura de Ingestão
-1. Coleta de Dados
-Raspagem de Dados:
+## Ative o ambiente virtual:
+1. No Windows:
+   ```sh
+   venv\Scripts\activate
+2. No macOS/Linux:
+   ```sh
+   source venv/bin/activate
 
-Ferramenta de Raspagem: Utilizaremos BeautifulSoup, uma biblioteca Python para extração de dados de arquivos HTML e XML.
-Agendamento: Um cron job ou serviço agendado no Amazon Lightsail será configurado para executar a raspagem de dados periodicamente (diariamente, semanalmente, etc.).
-2. Pipeline de Ingestão com Apache Kafka
-Pipeline de Dados:
+## Instale as dependências:
+1. Executar:
+   ```sh
+   pip install -r requirements.txt
 
-Apache Kafka: Os dados raspados serão enviados para Apache Kafka, que atua como o sistema de mensageria de dados. Kafka permite a ingestão contínua e em tempo real de dados, garantindo escalabilidade e alta disponibilidade.
-Produtores Kafka: Scripts de raspagem de dados atuam como produtores Kafka, enviando mensagens (dados raspados) para tópicos específicos em Kafka.
-3. Processamento de Dados com Apache Spark
-ETL (Extract, Transform, Load):
+## Executando a API
 
-Apache Spark: Um cluster Spark será configurado para processar os dados provenientes dos tópicos do Kafka. O Spark realizará as seguintes etapas:
-Extract (Extrair): Consumir dados dos tópicos Kafka.
-Transform (Transformar): Limpar, enriquecer e transformar os dados em um formato adequado para análise.
-Load (Carregar): Carregar os dados transformados no Amazon S3 e Amazon Redshift.
-4. Armazenamento de Dados
-Data Lake:
+1. No PyCharm, configure o projeto para rodar o servidor FastAPI:
+   - Vá em Run > Edit Configurations...
+   - Clique no + para adicionar uma nova configuração.
+   - Selecione Python.
+   - Defina um nome para a configuração (ex: FastAPI).
+   - Em Script Path, selecione o arquivo main.py.
+   - Em Parameters, adicione uvicorn main:app --reload.
+   - Configure o Working Directory para a pasta do projeto.
+   - Clique em Apply e depois em OK.
+2. Execute a configuração criada.
 
-Amazon S3: Dados brutos e transformados são armazenados no Amazon S3, que serve como Data Lake. O S3 é usado para armazenamento durável e altamente disponível de grandes volumes de dados.
-Data Warehouse:
+## Endpoints da API
 
-Amazon Redshift: Dados transformados e estruturados são carregados no Amazon Redshift, um data warehouse que permite consultas rápidas e eficientes para análise de dados.
-5. API de Acesso aos Dados
-Desenvolvimento da API:
+- **/scrape_data_production**
+   - Descrição: Raspa dados de produção da Embrapa por ano.
+   - Exemplo de Uso: `GET /scrape_data_production?year=`
 
-FastAPI: A API será desenvolvida utilizando FastAPI, um framework web moderno e de alto desempenho para construir APIs com Python.
-Uvicorn: Uvicorn será utilizado como servidor ASGI para servir a aplicação FastAPI.
-Proxy Reverso:
+- **/scrape_data_processing**
+   - Descrição: Raspa dados de processamento da Embrapa por ano e categoria.
+   - Exemplo de Uso: `GET /scrape_data_processing?year=&category=`
 
-Nginx: Nginx será configurado como proxy reverso para gerenciar requisições à API, oferecendo balanceamento de carga e maior segurança.
-Hospedagem:
+- **/scrape_data_commercialization**
+   - Descrição: Raspa dados de comercialização da Embrapa por ano.
+   - Exemplo de Uso: `GET /scrape_data_commercialization?year=`
 
-Amazon Lightsail: A aplicação será hospedada no Amazon Lightsail, um serviço de computação na nuvem simplificado e de baixo custo da AWS.
-6. Monitoramento e Manutenção
-Monitoramento e Logging:
+- **/scrape_data_importation**
+   - Descrição: Raspa dados de importação da Embrapa por ano e categoria.
+   - Exemplo de Uso: `GET /scrape_data_importation?year=&category=`
 
-Prometheus: Prometheus será utilizado para monitorar a saúde e o desempenho de toda a infraestrutura, bem como para coleta e visualização de logs. Ele coleta métricas e dados de desempenho em tempo real, fornecendo informações detalhadas sobre a operação do sistema.
-Grafana: Grafana será utilizado para visualizar as métricas coletadas pelo Prometheus em dashboards intuitivos.
-Alertas:
+- **/scrape_data_exportation**
+   - Descrição: Raspa dados de exportação da Embrapa por ano e categoria.
+   - Exemplo de Uso: `GET /scrape_data_exportation?year=&category=`
 
-AWS CloudWatch: Configuraremos alertas no AWS CloudWatch para notificar a equipe sobre qualquer anomalia ou falha no sistema.
-Fluxo de Dados na Arquitetura
-Raspagem de Dados:
+## Cenário de Utilização da API com Machine Learning
+### Descrição do Cenário
+A API de vitivinicultura será usada para coletar dados de produção, processamento, comercialização, importação e exportação de produtos vinícolas. Esses dados serão armazenados em um banco de dados SQL para posterior análise e uso em modelos de Machine Learning. A seguir está um cenário detalhado que descreve a arquitetura do projeto desde a ingestão dos dados até a alimentação do modelo de ML.
 
-Scripts de raspagem coletam dados do site Vitibrasil periodicamente usando BeautifulSoup e os enviam para Apache Kafka.
-Ingestão com Kafka:
-
-Apache Kafka recebe os dados raspados e os organiza em tópicos para processamento.
-Processamento com Spark:
-
-Apache Spark consome dados dos tópicos Kafka, realiza a limpeza, transformação e enriquece os dados.
-Dados processados são carregados no Amazon S3 (Data Lake) e no Amazon Redshift (Data Warehouse).
-API:
-
-A API desenvolvida com FastAPI e servida pelo Uvicorn permite que os usuários acessem os dados processados.
-Nginx atua como proxy reverso para gerenciar as requisições.
-Monitoramento e Manutenção:
-
-Prometheus monitora o desempenho e a saúde do sistema e coleta logs.
-Grafana visualiza métricas de desempenho.
-AWS CloudWatch configura alertas para notificação de problemas.
-
-
-
-
-
-
-1.3.1 Desenho da arquitetura
-
-       +----------------------------+
-       |     Raspagem de Dados      |
-       |   (BeautifulSoup)          |
-       +------------+---------------+
-                    |
-                    v
-       +----------------------------+
-       |   Pipeline de Ingestão     |
-       |      (Apache Kafka)        |
-       +------------+---------------+
-                    |
-                    v
-       +----------------------------+
-       |    Processamento ETL       |
-       |      (Apache Spark)        |
-       +------------+---------------+
-         /                  \
-        v                    v
-+-------------+       +--------------+
-|   Data Lake |       | Data Warehouse|
-|   (Amazon S3)|       | (Redshift)   |
-+-------------+       +--------------+
-        |                    |
-        v                    v
-+----------------------------+
-|           API              |
-| (FastAPI + Uvicorn + Nginx)|
-+------------+---------------+
-                    |
-                    v
-       +----------------------------+
-       |    Hospedagem e Deploy     |
-       |      (Amazon Lightsail)    |
-       +------------+---------------+
-                    |
-                    v
-       +----------------------------+
-       |  Monitoramento & Logs      |
-       | (Prometheus/Grafana)       |
-       +----------------------------+
+### Arquitetura do Projeto
+1. **Ingestão de Dados**
+    - A API coleta dados das diversas abas do site da Embrapa.
+    - Esses dados são extraídos e estruturados em formato JSON.
 
 
+2. **Armazenamento dos Dados**
+    - Os dados JSON são enviados para um banco de dados SQL, recomendado PostgreSQL pela sua robustez e suporte a operações complexas.
+    - Uma alternativa é usar um data warehouse como Amazon Redshift para grandes volumes de dados.
 
 
-## 2. Desenvolvedores;
+3. **Pré-processamento dos Dados**
+    - Os dados armazenados são limpos e transformados.
+    - Técnicas de limpeza podem incluir a remoção de duplicatas, tratamento de valores nulos e normalização.
+    - Transformações podem incluir agregações, cálculos de novas métricas e formatação dos dados para uso em modelos de ML.
 
-Gabriel Sargeiro (https://www.linkedin.com/in/gabriel-sargeiro/)
 
-Guilherme Lobo (https://www.linkedin.com/in/guilhermegclobo/)
+4. **Pipeline de Machine Learning**
+    - **Treinamento:** Os dados pré-processados são usados para treinar modelos de Machine Learning. Isso pode incluir modelos de regressão, classificação ou séries temporais, dependendo dos objetivos específicos.
+    - **Validação:** Os modelos treinados são validados com um conjunto de dados de teste para garantir sua precisão e capacidade de generalização.
 
-Matheus Moura (https://www.linkedin.com/in/matheus-moura-pinho-55a25b186/)
+
+5. **Deploy do Modelo**
+    - **Serviço de Previsão:** Os modelos treinados são implantados em um serviço de previsão que pode ser acessado via API.
+    - **Integração:** A API pode ser integrada com outros sistemas para fornecer previsões em tempo real ou em lote.
+    - **Monitoramento e Atualização:** O desempenho do modelo é monitorado continuamente e os modelos são re-treinados periodicamente com novos dados para manter a precisão.
+
+### Ferramentas Utilizadas
+1. **API:** FastAPI para a coleta de dados.
+2. **Banco de Dados:** SQL (ainda não implementado).
+3. **Machine Learning:** Frameworks como scikit-learn ou TensorFlow (ainda não implementado).
+4. **Deploy:** Uvicorn para rodar a API e serviços AWS para o deploy do modelo.
+
+## Deploy da API
+- Link do deploy da API: http://52.22.130.203/docs
+
+## Repositório GitHub
+- Link do repositório GitHub: https://github.com/guilhermelobo94/embrapa_fiap.git
